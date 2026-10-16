@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mb-0">Listado de mantenciones</h1>
+        </div>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#crearMantencionModal">
+            Nueva mantención
+        </button>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Código</th>
+                            <th>Ticket</th>
+                            <th>Descripción</th>
+                            <th>Estado</th>
+                            <th>Inicio</th>
+                            <th>Termino</th>
+                            <th>Observaciones</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for mantencion in mantenciones %}
+                        <tr>
+                            <td><span class="fw-semibold text-primary">MT-{{ mantencion.idmantencion }}</span></td>
+                            <td>
+                                {% if mantencion.idticket %}
+                                    <span class="fw-semibold text-secondary">TK-{{ mantencion.idticket.idticket }}</span>
+                                {% else %}
+                                    <span class="text-muted">Sin ticket</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ mantencion.descripcion|truncatechars:70 }}</td>
+                            <td>
+                                {% if mantencion.estado == 'Pendiente' %}
+                                    <span class="badge bg-primary">Pendiente</span>
+                                {% elif mantencion.estado == 'En Proceso' %}
+                                    <span class="badge bg-secondary">En Proceso</span>
+                                {% else %}
+                                    <span class="badge bg-success">Finalizado</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ mantencion.fechainicio|date:"d/m/Y H:i" }}</td>
+                            <td>{{ mantencion.fechatermino|date:"d/m/Y H:i" }}</td>
+                            <td>{{ mantencion.observaciones|default:"-" }}</td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editarMantencionModal{{ mantencion.idmantencion }}">
+                                    Editar
+                                </button>
+                            </td>
+                        </tr>
+
+                        <!-- Modals for editing and deleting would go here -->
+
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">No hay mantenciones registradas.</td>
+                        </tr>
+
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="crearMantencionModal" tabindex="-1" aria-labelledby="crearMantencionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="crearMantencionModalLabel">Nueva mantención</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'crear_mantencion' %}" class="needs-validation" novalidate>
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="id_idticket" class="form-label">Ticket</label>
+                        {{ form.idticket }}
+                        <div class="invalid-feedback">Seleccione un ticket válido.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_descripcion" class="form-label">Descripción</label>
+                        {{ form.descripcion }}
+                        <div class="invalid-feedback">La descripción debe tener al menos 10 caracteres.</div>
+                        <div class="form-text">Describe brevemente la mantención.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_estado" class="form-label">Estado</label>
+                        {{ form.estado }}
+                        <div class="invalid-feedback">Seleccione un estado válido.</div>
+                        <div class="form-text">Indica el estado actual de la mantención.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_fechatermino" class="form-label">Fecha de Término</label>
+                        {{ form.fechatermino }}
+                        <div class="invalid-feedback">Ingrese una fecha de término válida.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_observaciones" class="form-label">Observaciones</label>
+                        {{ form.observaciones }}
+                        <div class="invalid-feedback">Las observaciones deben tener al menos 10 caracteres.</div>
+                        <div class="form-text">Opcional: Agrega cualquier comentario adicional.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    (() => {
+      'use strict'
+      const forms = document.querySelectorAll('.needs-validation')
+      Array.from(forms).forEach(form => {
+        form.addEventListener('submit', event => {
+          if (!form.checkValidity()) {
+            event.preventDefault()
+            event.stopPropagation()
+          }
+          form.classList.add('was-validated')
+        }, false)
+      })
+    })()
+</script>
+
+{% endblock %}
