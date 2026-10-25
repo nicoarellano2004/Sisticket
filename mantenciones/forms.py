@@ -30,6 +30,6 @@ class MantencionForm(forms.ModelForm):
         model = mantencion
         fields = ['idticket', 'descripcion', 'estado', 'observaciones', 'fechatermino']
         widgets = {
-            'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Describe la mantención a realizar', 'required': True}),
+            'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Describe la mantención a realizar', 'required': True, 'minlength': 10}),
             'observaciones': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Observaciones adicionales (opcional)'}),
         }

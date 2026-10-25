@@ -13,17 +13,6 @@ class TicketForm(forms.ModelForm):
         widget=forms.Select(attrs={'class': 'form-select', 'required': True}),
     )
 
-    estado = forms.ChoiceField(
-        choices=[
-            ('', 'Seleccione estado'),
-            ('Pendiente', 'Pendiente'),
-            ('En proceso', 'En proceso'),
-            ('Finalizado', 'Finalizado'),
-            ('Cerrado', 'Cerrado'),
-        ],
-        widget=forms.Select(attrs={'class': 'form-select', 'required': True}),
-    )
-
     fechacierre = forms.DateTimeField(
         required=True,
         widget=forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local', 'required': True}),
@@ -31,8 +20,8 @@ class TicketForm(forms.ModelForm):
 
     class Meta:
         model = ticket
-        fields = ['titulo', 'descripcion', 'prioridad', 'estado', 'fechacierre']
+        fields = ['titulo', 'descripcion', 'prioridad', 'fechacierre']
         widgets = {
-            'titulo': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Falla en servidor', 'required': True}),
-            'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Describe el problema o solicitud de mantenimiento', 'required': True}),
+            'titulo': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Falla en servidor', 'required': True, 'minlength': 3}),
+            'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Describe el problema o solicitud de mantenimiento', 'required': True, 'minlength': 10}),
         }

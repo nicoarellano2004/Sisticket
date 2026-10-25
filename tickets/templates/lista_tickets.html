@@ -34,6 +34,7 @@
                             <th>Descripción</th>
                             <th>Prioridad</th>
                             <th>Estado</th>
+                            <th>Creado por</th>
                             <th>Creación</th>
                             <th>Cierre</th>
                             <th class="text-end">Acciones</th>
@@ -49,22 +50,27 @@
                                 {% if ticket.prioridad == 'Urgente' %}
                                     <span class="badge bg-danger">Urgente</span>
                                 {% elif ticket.prioridad == 'Alta' %}
-                                    <span class="badge bg-warning text-dark">Alta</span>
+                                    <span class="badge bg-warning">Alta</span>
                                 {% elif ticket.prioridad == 'Media' %}
-                                    <span class="badge bg-info text-dark">Media</span>
+                                    <span class="badge bg-info">Media</span>
                                 {% else %}
                                     <span class="badge bg-success">Baja</span>
                                 {% endif %}
                             </td>
                             <td>
-                                {% if ticket.estado == 'Pendiente' %}
-                                    <span class="badge bg-primary">Pendiente</span>
+                                {% if ticket.estado == 'Abierto' %}
+                                    <span class="badge bg-success">Abierto</span>
                                 {% elif ticket.estado == 'En proceso' %}
-                                    <span class="badge bg-secondary">En proceso</span>
-                                {% elif ticket.estado == 'Finalizado' %}
-                                    <span class="badge bg-success">Finalizado</span>
+                                    <span class="badge bg-warning">En proceso</span>
                                 {% else %}
-                                    <span class="badge bg-dark">Cerrado</span>
+                                    <span class="badge bg-danger">Cerrado</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if ticket.usuario %}
+                                    {{ ticket.usuario.get_full_name|default:ticket.usuario.username }}
+                                {% else %}
+                                    <span class="text-muted">-</span>
                                 {% endif %}
                             </td>
                             <td>{{ ticket.fechacreacion|date:"d/m/Y H:i" }}</td>
@@ -76,12 +82,22 @@
                                 {% endif %}
                             </td>
                             <td class="text-end">
+                                {% if ticket.estado == 'Abierto' %}
                                 <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#verTicketModal{{ ticket.idticket }}">
                                     Ver
                                 </button>
                                 <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editarTicketModal{{ ticket.idticket }}">
                                     Editar
                                 </button>
+                                <form method="post" action="{% url 'eliminar_ticket' ticket.idticket %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Deseas cerrar este ticket?')">
+                                        Cerrar
+                                    </button>
+                                </form>
+                                {% else %}
+                                    <span class="text-muted small"><i class="bi bi-lock-fill"></i> Sin acciones</span>
+                                {% endif %}
                             </td>
                         </tr>
                         {% empty %}
@@ -137,12 +153,6 @@
                         </div>
 
                         <div class="col-md-4">
-                            <label for="id_estado" class="form-label fw-semibold">Estado</label>
-                            {{ form.estado }}
-                            <div class="invalid-feedback">Selecciona un estado.</div>
-                        </div>
-
-                        <div class="col-md-4">
                             <label for="id_fechacierre" class="form-label fw-semibold">Fecha de cierre</label>
                             {{ form.fechacierre }}
                             <div class="invalid-feedback">Ingresa una fecha de cierre válida.</div>
@@ -161,6 +171,71 @@
         </div>
     </div>
 </div>
+
+{% for ticket in tickets %}
+<div class="modal fade" id="editarTicketModal{{ ticket.idticket }}" tabindex="-1" aria-labelledby="editarTicketModalLabel{{ ticket.idticket }}" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <form method="post" action="{% url 'editar_ticket' ticket.idticket %}" class="needs-validation" novalidate>
+                {% csrf_token %}
+                <div class="modal-header bg-warning-subtle border-0 px-4 py-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
+                            <i class="bi bi-pencil-square fs-5"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title mb-0 fw-bold text-warning" id="editarTicketModalLabel{{ ticket.idticket }}">Editar ticket</h5>
+                            <small class="text-secondary">#TK-{{ ticket.idticket }}</small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label for="titulo_{{ ticket.idticket }}" class="form-label fw-semibold">Título</label>
+                            <input type="text" class="form-control" id="titulo_{{ ticket.idticket }}" name="titulo" value="{{ ticket.titulo }}" required minlength="3">
+                            <div class="invalid-feedback">Ingresa un título válido con al menos 3 caracteres.</div>
+                        </div>
+
+                        <div class="col-12">
+                            <label for="descripcion_{{ ticket.idticket }}" class="form-label fw-semibold">Descripción</label>
+                            <textarea class="form-control" id="descripcion_{{ ticket.idticket }}" name="descripcion" rows="4" required minlength="10">{{ ticket.descripcion }}</textarea>
+                            <div class="invalid-feedback">La descripción debe tener al menos 10 caracteres.</div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="prioridad_{{ ticket.idticket }}" class="form-label fw-semibold">Prioridad</label>
+                            <select class="form-select" id="prioridad_{{ ticket.idticket }}" name="prioridad" required>
+                                <option value="">Seleccione prioridad</option>
+                                <option value="Baja" {% if ticket.prioridad == 'Baja' %}selected{% endif %}>Baja</option>
+                                <option value="Media" {% if ticket.prioridad == 'Media' %}selected{% endif %}>Media</option>
+                                <option value="Alta" {% if ticket.prioridad == 'Alta' %}selected{% endif %}>Alta</option>
+                                <option value="Urgente" {% if ticket.prioridad == 'Urgente' %}selected{% endif %}>Urgente</option>
+                            </select>
+                            <div class="invalid-feedback">Selecciona una prioridad.</div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="fechacierre_{{ ticket.idticket }}" class="form-label fw-semibold">Fecha de cierre</label>
+                            <input type="datetime-local" class="form-control" id="fechacierre_{{ ticket.idticket }}" name="fechacierre" value="{% if ticket.fechacierre %}{{ ticket.fechacierre|date:'Y-m-d H:i' }}{% endif %}">
+                            <div class="form-text">Opcional</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-0 px-4 pb-4 pt-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning px-4 text-dark">
+                        <i class="bi bi-check2-circle me-1"></i>Guardar cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
 
 <script>
     (() => {

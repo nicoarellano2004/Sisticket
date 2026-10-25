@@ -13,6 +13,7 @@ class mantencion(models.Model):
     class Meta:
         db_table = 'mantencion'
         managed = True
+        default_permissions = ('add', 'change', 'delete', 'view')
 
     def __str__(self):
         return self.descripcion

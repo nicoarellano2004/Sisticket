@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="mb-0">Lista de Usuarios</h1>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#crearUsuarioModal">
+                Crear Usuario
+            </button>
+            <button type="button" class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#crearRolModal">
+                Crear rol
+            </button>
+        </div>
+    </div>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Imagen</th>
+                <th>Nombres</th>
+                <th>Apellidos</th>
+                <th>Nombre de Usuario</th>
+                <th>Correo Electrónico</th>
+                <th>RUT</th>
+                <th>Teléfono</th>
+                <th>Dirección</th>
+                <th>Rol</th>
+                <th>Fecha de Registro</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for usuario in usuarios %}
+            <tr>
+                <td>{{ usuario.id }}</td>
+                <td>
+                    {% if usuario.img %}
+                        <img src="{{ usuario.img.url }}" alt="Imagen de {{ usuario.first_name }}" class="img-fluid" style="max-width: 100px;">
+                    {% else %}
+                        <p class="card-text">No hay imagen disponible.</p>
+                    {% endif %}
+                </td>
+                <td>{{ usuario.first_name }}</td>
+                <td>{{ usuario.last_name }}</td>
+                <td>{{ usuario.username }}</td>
+                <td>{{ usuario.email }}</td>
+                <td>{{ usuario.rut }}</td>
+                <td>{{ usuario.telefono }}</td>
+                <td>{{ usuario.direccion }}</td>
+                <td>
+                    {% for group in usuario.groups.all %}
+                        {{ group.name }}{% if not forloop.last %}, {% endif %}
+                    {% empty %}
+                        No asignado
+                    {% endfor %}
+                </td>
+                <td>{{ usuario.date_joined }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal para crear rol -->
+<div class="modal fade" id="crearRolModal" tabindex="-1" aria-labelledby="crearRolModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="crearRolModalLabel">Crear rol</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'crear_rol' %}" class="needs-validation" novalidate>
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="nombre_rol" class="form-label">Nombre del rol</label>
+                        <input type="text" id="nombre_rol" name="nombre_rol" class="form-control" placeholder="Ej: Funcionario" required>
+                        <div class="invalid-feedback">Ingrese un nombre para el rol</div>
+                    </div>
+
+                    <div class="mb-0">
+                        <label class="form-label">Permisos de Django</label>
+                        <select name="permisos" class="form-select" multiple size="12" aria-label="Permisos del rol">
+                            {% for permiso in permisos_disponibles %}
+                                <option value="{{ permiso.id }}">{{ permiso.content_type.app_label }} | {{ permiso.codename }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Mantén presionado Ctrl o Cmd para seleccionar varios permisos.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Guardar rol</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para crear usuario -->
+<div class="modal fade" id="crearUsuarioModal" tabindex="-1" aria-labelledby="crearUsuarioModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="crearUsuarioModalLabel">Crear Usuario</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'crear_usuario' %}" enctype="multipart/form-data" class="needs-validation" novalidate>
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="id_first_name" class="form-label">Nombres</label>
+                        {{ form.first_name }}
+                        <div class="invalid-feedback">Ingrese nombres</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_last_name" class="form-label">Apellidos</label>
+                        {{ form.last_name }}
+                        <div class="invalid-feedback">Ingrese apellidos</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_email" class="form-label">Correo Electrónico</label>
+                        {{ form.email }}
+                        <div class="invalid-feedback">Ingrese un correo electrónico válido</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_username" class="form-label">Nombre de Usuario</label>
+                        {{ form.username }}
+                        <div class="invalid-feedback">Ingrese un nombre de usuario</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_rut" class="form-label">RUT</label>
+                        {{ form.rut }}
+                        <div class="invalid-feedback">Ingrese un RUT válido</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_telefono" class="form-label">Teléfono</label>
+                        {{ form.telefono }}
+                        <div class="invalid-feedback">Ingrese un número de teléfono válido</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_direccion" class="form-label">Dirección</label>
+                        {{ form.direccion }}
+                        <div class="invalid-feedback">Ingrese una dirección válida</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_img" class="form-label">Imagen</label>
+                        {{ form.img }}
+                        <div class="invalid-feedback">Seleccione una imagen</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_password" class="form-label">Contraseña</label>
+                        {{ form.password }}
+                        <div class="invalid-feedback">Ingrese una contraseña</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_rol" class="form-label">Rol</label>
+                        {{ form.rol }}
+                        <div class="invalid-feedback">Seleccione un rol</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    (() => {
+      'use strict'
+      const forms = document.querySelectorAll('.needs-validation')
+      Array.from(forms).forEach(form => {
+        form.addEventListener('submit', event => {
+          if (!form.checkValidity()) {
+            event.preventDefault()
+            event.stopPropagation()
+          }
+          form.classList.add('was-validated')
+        }, false)
+      })
+    })()
+</script>
+{% endblock %}
